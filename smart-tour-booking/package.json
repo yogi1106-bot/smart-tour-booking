@@ -1,0 +1,25 @@
+{
+  "name": "smart-tour-booking",
+  "version": "1.0.0",
+  "description": "Your Smart & Reliable Bus Travel Partner",
+  "main": "server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "start": "node backend/server.js",
+    "build": "cd frontend && npm run build",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "bus",
+    "travel",
+    "booking",
+    "tour"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}

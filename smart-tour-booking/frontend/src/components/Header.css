@@ -1,0 +1,185 @@
+.header {
+  background: linear-gradient(135deg, #ff6b35 0%, #004e89 100%);
+  color: white;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.logo:hover {
+  color: #ffd93d;
+}
+
+.nav {
+  display: flex;
+  gap: 30px;
+  flex: 1;
+  margin-left: 40px;
+}
+
+.nav a {
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.nav a::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #ffd93d;
+  transition: width 0.3s ease;
+}
+
+.nav a:hover::after {
+  width: 100%;
+}
+
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-btn,
+.login-btn,
+.signup-btn,
+.bookings-btn,
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.user-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.login-btn {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.login-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.signup-btn {
+  background-color: #ffd93d;
+  color: #004e89;
+}
+
+.signup-btn:hover {
+  background-color: #ffed4e;
+  transform: translateY(-2px);
+}
+
+.bookings-btn {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.bookings-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.logout-btn {
+  background-color: #ff6b6b;
+}
+
+.logout-btn:hover {
+  background-color: #ff5252;
+}
+
+.menu-toggle {
+  display: none;
+  background: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  border: none;
+}
+
+@media (max-width: 768px) {
+  .header-container {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 20px;
+  }
+
+  .logo {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .menu-toggle {
+    display: block;
+    margin-left: auto;
+  }
+
+  .nav,
+  .auth-section {
+    display: none;
+    width: 100%;
+  }
+
+  .nav.active,
+  .auth-section.active {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .nav {
+    margin-left: 0;
+  }
+
+  .nav a {
+    padding: 10px 0;
+  }
+
+  .auth-section {
+    gap: 10px;
+  }
+
+  .user-btn,
+  .login-btn,
+  .signup-btn,
+  .bookings-btn,
+  .logout-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
