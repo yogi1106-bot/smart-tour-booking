@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/smart-tour-booking/static/css/main.44802441.css",
-    "main.js": "/smart-tour-booking/static/js/main.72614ef9.js",
-    "index.html": "/smart-tour-booking/index.html",
-    "main.44802441.css.map": "/smart-tour-booking/static/css/main.44802441.css.map",
-    "main.72614ef9.js.map": "/smart-tour-booking/static/js/main.72614ef9.js.map"
+    "main.css": "/static/css/main.44802441.css",
+    "main.js": "/static/js/main.c9a501fc.js",
+    "index.html": "/index.html",
+    "main.44802441.css.map": "/static/css/main.44802441.css.map",
+    "main.c9a501fc.js.map": "/static/js/main.c9a501fc.js.map"
   },
   "entrypoints": [
     "static/css/main.44802441.css",
-    "static/js/main.72614ef9.js"
+    "static/js/main.c9a501fc.js"
   ]
 }
