@@ -9,7 +9,11 @@
     "dev:frontend": "cd frontend && npm start",
     "start": "node backend/server.js",
     "build": "cd frontend && npm run build",
-    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "deploy": "./deploy.sh",
+    "deploy:win": "deploy.bat",
+    "build:all": "npm run install-all && npm run build",
+    "test": "cd backend && npm test && cd ../frontend && npm test"
   },
   "keywords": [
     "bus",

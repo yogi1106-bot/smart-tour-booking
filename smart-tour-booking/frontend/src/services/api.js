@@ -50,6 +50,10 @@ export const driversAPI = {
 export const bookingsAPI = {
   createBooking: (bookingData) => api.post('/bookings', bookingData),
   getUserBookings: () => api.get('/bookings'),
+  getDriverBookings: () => api.get('/bookings/driver'),
+  getAllBookings: () => api.get('/bookings/admin/all'),
+  assignDriver: (bookingId, driverId) => api.put(`/bookings/${bookingId}/assign-driver`, { driverId }),
+  updateBookingStatus: (bookingId, status) => api.put(`/bookings/${bookingId}/status`, { status }),
   getBookingById: (id) => api.get(`/bookings/${id}`),
   cancelBooking: (id, reason) => api.put(`/bookings/${id}/cancel`, { cancellationReason: reason })
 };

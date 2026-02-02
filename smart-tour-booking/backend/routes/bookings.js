@@ -128,7 +128,14 @@ router.get('/', auth, async (req, res) => {
     const bookings = await Booking.find({ userId: req.user.userId })
       .populate('tourId', 'name location area')
       .populate('vehicleId', 'type model registrationNumber')
-      .populate('driverId', 'userId')
+      .populate({
+        path: 'driverId',
+        select: 'licenseNumber experience',
+        populate: {
+          path: 'userId',
+          select: 'name phone'
+        }
+      })
       .sort({ createdAt: -1 });
 
     // Get payments for each booking
@@ -151,6 +158,224 @@ router.get('/', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching bookings',
+      error: error.message
+    });
+  }
+});
+
+// Get driver bookings
+router.get('/driver', auth, async (req, res) => {
+  try {
+    // Find the driver document for this user
+    const Driver = require('../models/Driver');
+    const driver = await Driver.findOne({ userId: req.user.userId });
+
+    if (!driver) {
+      return res.status(404).json({
+        success: false,
+        message: 'Driver profile not found'
+      });
+    }
+
+    const bookings = await Booking.find({ driverId: driver._id })
+      .populate('tourId', 'name location area')
+      .populate('vehicleId', 'type model registrationNumber')
+      .populate('userId', 'name email phone')
+      .sort({ createdAt: -1 });
+
+    // Get payments for each booking
+    const bookingsWithPayments = await Promise.all(
+      bookings.map(async (booking) => {
+        const payments = await require('../models/Payment').find({ bookingId: booking._id });
+        return {
+          ...booking.toObject(),
+          payments
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      count: bookingsWithPayments.length,
+      data: bookingsWithPayments
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching driver bookings',
+      error: error.message
+    });
+  }
+});
+
+// Get all bookings (Admin only)
+router.get('/admin/all', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+      });
+    }
+
+    const bookings = await Booking.find({})
+      .populate('tourId', 'name location area')
+      .populate('vehicleId', 'type model registrationNumber')
+      .populate('userId', 'name email phone')
+      .populate({
+        path: 'driverId',
+        select: 'licenseNumber experience',
+        populate: {
+          path: 'userId',
+          select: 'name phone'
+        }
+      })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: bookings.length,
+      data: bookings
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching all bookings',
+      error: error.message
+    });
+  }
+});
+
+// Assign driver to booking (Admin only)
+router.put('/:id/assign-driver', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+      });
+    }
+
+    const { driverId } = req.body;
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { driverId },
+      { new: true }
+    ).populate('driverId');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Driver assigned successfully',
+      data: booking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error assigning driver',
+      error: error.message
+    });
+  }
+});
+
+// Update booking status (Admin or assigned Driver)
+router.put('/:id/status', auth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['pending', 'confirmed', 'in-progress', 'completed', 'cancelled'];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status'
+      });
+    }
+
+    // Find the booking first to check permissions
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check permissions
+    if (req.user.role === 'admin') {
+      // Admin can update any booking to any status
+    } else if (req.user.role === 'driver') {
+      // Find the driver document for this user
+      const Driver = require('../models/Driver');
+      const driver = await Driver.findOne({ userId: req.user.userId });
+
+      if (!driver) {
+        return res.status(403).json({
+          success: false,
+          message: 'Driver profile not found'
+        });
+      }
+
+      // Driver can only update their assigned bookings
+      if (!booking.driverId || booking.driverId.toString() !== driver._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: 'You can only update your assigned bookings'
+        });
+      }
+
+      // Driver can only change status to 'in-progress' or 'completed'
+      if (!['in-progress', 'completed'].includes(status)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Drivers can only mark bookings as in-progress or completed'
+        });
+      }
+
+      // Additional validation: can only start trip if status is confirmed
+      if (status === 'in-progress' && booking.status !== 'confirmed') {
+        return res.status(400).json({
+          success: false,
+          message: 'Can only start trip for confirmed bookings'
+        });
+      }
+
+      // Can only complete trip if status is in-progress
+      if (status === 'completed' && booking.status !== 'in-progress') {
+        return res.status(400).json({
+          success: false,
+          message: 'Can only complete trip for in-progress bookings'
+        });
+      }
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: 'Insufficient permissions'
+      });
+    }
+
+    // Update the booking
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'Booking status updated successfully',
+      data: updatedBooking
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error updating booking status',
       error: error.message
     });
   }

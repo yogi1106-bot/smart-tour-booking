@@ -1,11 +1,12 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { toursAPI, vehiclesAPI } from '../services/api';
+import { toursAPI, vehiclesAPI, driversAPI } from '../services/api';
 
 export const BookingContext = createContext();
 
 export const BookingProvider = ({ children }) => {
   const [tours, setTours] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [drivers, setDrivers] = useState([]);
   const [selectedTour, setSelectedTour] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [bookingData, setBookingData] = useState({});
@@ -14,6 +15,7 @@ export const BookingProvider = ({ children }) => {
   useEffect(() => {
     fetchTours();
     fetchVehicles();
+    fetchDrivers();
   }, []);
 
   const fetchTours = async (filters = {}) => {
@@ -37,6 +39,15 @@ export const BookingProvider = ({ children }) => {
     }
   };
 
+  const fetchDrivers = async () => {
+    try {
+      const response = await driversAPI.getAllDrivers();
+      setDrivers(response.data.data);
+    } catch (error) {
+      console.error('Error fetching drivers:', error);
+    }
+  };
+
   const updateBookingData = (data) => {
     setBookingData({ ...bookingData, ...data });
   };
@@ -46,6 +57,7 @@ export const BookingProvider = ({ children }) => {
       value={{
         tours,
         vehicles,
+        drivers,
         selectedTour,
         setSelectedTour,
         selectedVehicle,
@@ -54,6 +66,7 @@ export const BookingProvider = ({ children }) => {
         updateBookingData,
         fetchTours,
         fetchVehicles,
+        fetchDrivers,
         loading
       }}
     >

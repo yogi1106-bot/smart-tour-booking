@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { bookingsAPI, paymentsAPI } from '../services/api';
+import { bookingsAPI, paymentsAPI, toursAPI, vehiclesAPI, driversAPI } from '../services/api';
 import './Home.css';
 import { FaCreditCard, FaMobileAlt, FaQrcode, FaCheckCircle, FaArrowLeft, FaRupeeSign, FaCopy, FaDownload } from 'react-icons/fa';
 import { loadStripe } from '@stripe/stripe-js';
@@ -30,6 +30,7 @@ const CardPaymentForm = ({ amount, bookingDetails, onPaymentSuccess, onPaymentEr
       const bookingResponse = await bookingsAPI.createBooking({
         tourId: bookingDetails.tourId,
         vehicleId: bookingDetails.vehicleId,
+        driverId: bookingDetails.driverId,
         startDate: bookingDetails.formData.startDate,
         endDate: bookingDetails.formData.endDate,
         numberOfPassengers: bookingDetails.formData.numberOfPassengers,
@@ -121,6 +122,9 @@ const Payment = () => {
   const [transactionId, setTransactionId] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [tour, setTour] = useState(null);
+  const [vehicle, setVehicle] = useState(null);
+  const [driver, setDriver] = useState(null);
 
   // Get booking data from navigation state
   const bookingData = location.state;
@@ -130,6 +134,25 @@ const Payment = () => {
       navigate('/tours');
       return;
     }
+
+    // Fetch tour, vehicle, and driver details
+    const fetchDetails = async () => {
+      try {
+        const [tourRes, vehicleRes, driverRes] = await Promise.all([
+          toursAPI.getTourById(bookingData.tourId),
+          vehiclesAPI.getVehicleById(bookingData.vehicleId),
+          bookingData.driverId ? driversAPI.getDriverById(bookingData.driverId) : Promise.resolve(null)
+        ]);
+
+        setTour(tourRes.data.data);
+        setVehicle(vehicleRes.data.data);
+        if (driverRes) setDriver(driverRes.data.data);
+      } catch (error) {
+        console.error('Error fetching details:', error);
+      }
+    };
+
+    fetchDetails();
   }, [bookingData, navigate]);
 
   if (!bookingData) {
@@ -289,12 +312,21 @@ const Payment = () => {
             <div className="summary-details">
               <div className="summary-item">
                 <span className="label">Tour:</span>
-                <span className="value">Tour ID: {tourId}</span>
+                <span className="value">{tour?.name || 'Loading...'}</span>
               </div>
               <div className="summary-item">
                 <span className="label">Vehicle:</span>
-                <span className="value">Vehicle ID: {vehicleId}</span>
+                <span className="value">{vehicle ? `${vehicle.type} - ${vehicle.model}` : 'Loading...'}</span>
               </div>
+              {driver && (
+                <div className="summary-item">
+                  <span className="label">Driver:</span>
+                  <span className="value">{driver.userId?.name || 'N/A'}</span>
+                  <small style={{ display: 'block', color: '#666', marginTop: '4px' }}>
+                    Contact: {driver.userId?.phone || 'N/A'}
+                  </small>
+                </div>
+              )}
               <div className="summary-item">
                 <span className="label">Duration:</span>
                 <span className="value">{formData.startDate} to {formData.endDate}</span>

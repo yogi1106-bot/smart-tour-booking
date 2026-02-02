@@ -5,6 +5,8 @@ require('dotenv').config();
 const User = require('./models/User');
 const Tour = require('./models/Tour');
 const Vehicle = require('./models/Vehicle');
+const Driver = require('./models/Driver');
+const Booking = require('./models/Booking');
 
 async function seedDatabase() {
   try {
@@ -19,6 +21,9 @@ async function seedDatabase() {
     // Clear existing data
     await User.deleteMany({});
     await Tour.deleteMany({});
+    await Driver.deleteMany({});
+    await Vehicle.deleteMany({});
+    await Booking.deleteMany({});
     console.log('Cleared existing data');
 
     // Hash passwords
@@ -52,6 +57,75 @@ async function seedDatabase() {
     ]);
 
     console.log('Created sample users');
+
+    // Create sample drivers
+    const driverUsers = await User.insertMany([
+      {
+        name: 'Rajesh Kumar',
+        email: 'rajesh.driver@example.com',
+        phone: '7777777777',
+        password: hashedPassword,
+        address: '123 Driver Lane',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        pincode: '400001',
+        role: 'driver'
+      },
+      {
+        name: 'Amit Singh',
+        email: 'amit.driver@example.com',
+        phone: '6666666666',
+        password: hashedPassword,
+        address: '456 Driver Street',
+        city: 'Delhi',
+        state: 'Delhi',
+        pincode: '110001',
+        role: 'driver'
+      },
+      {
+        name: 'Suresh Patel',
+        email: 'suresh.driver@example.com',
+        phone: '5555555555',
+        password: hashedPassword,
+        address: '789 Driver Road',
+        city: 'Ahmedabad',
+        state: 'Gujarat',
+        pincode: '380001',
+        role: 'driver'
+      }
+    ]);
+
+    const drivers = await Driver.insertMany([
+      {
+        userId: driverUsers[0]._id,
+        licenseNumber: 'MH0123456789',
+        licenseExpiry: new Date('2025-12-31'),
+        experience: 8,
+        rating: 4.5,
+        totalTrips: 150,
+        status: 'active'
+      },
+      {
+        userId: driverUsers[1]._id,
+        licenseNumber: 'DL0987654321',
+        licenseExpiry: new Date('2026-06-15'),
+        experience: 12,
+        rating: 4.8,
+        totalTrips: 300,
+        status: 'active'
+      },
+      {
+        userId: driverUsers[2]._id,
+        licenseNumber: 'GJ1122334455',
+        licenseExpiry: new Date('2025-09-20'),
+        experience: 6,
+        rating: 4.2,
+        totalTrips: 90,
+        status: 'active'
+      }
+    ]);
+
+    console.log('Created sample drivers');
 
     // Create sample tours
     const tours = await Tour.insertMany([
@@ -628,6 +702,86 @@ async function seedDatabase() {
     ]);
 
     console.log('Created sample vehicles');
+
+    // Create sample bookings
+    const bookings = await Booking.insertMany([
+      {
+        bookingId: 'STB1001',
+        userId: users[0]._id, // Demo User
+        tourId: tours[0]._id, // Mumbai Sightseeing
+        vehicleId: vehicles[0]._id, // Toyota Innova
+        driverId: drivers[0]._id, // Rajesh Kumar
+        startDate: new Date('2026-02-15'),
+        endDate: new Date('2026-02-17'),
+        numberOfDays: 3,
+        numberOfPassengers: 4,
+        passengers: [
+          { name: 'John Doe', age: 35, gender: 'male', contact: '9876543210' },
+          { name: 'Jane Doe', age: 32, gender: 'female', contact: '9876543211' },
+          { name: 'Alice Smith', age: 28, gender: 'female', contact: '9876543212' },
+          { name: 'Bob Johnson', age: 40, gender: 'male', contact: '9876543213' }
+        ],
+        estimatedKms: 150,
+        foodPreferences: {
+          breakfast: true,
+          lunch: true,
+          dinner: true,
+          snacks: false
+        },
+        costBreakdown: {
+          vehicleRentPerDay: 2200,
+          totalVehicleRent: 6600,
+          kmBasedCharge: 1350,
+          foodCost: 1500,
+          driverCharges: 600,
+          gst: 1188,
+          totalAmount: 11238
+        },
+        advanceAmount: 3371, // 30% of total
+        remainingAmount: 7867,
+        specialRequests: 'Need pickup from airport'
+      },
+      {
+        bookingId: 'STB1002',
+        userId: users[0]._id, // Demo User
+        tourId: tours[1]._id, // Delhi Historical Tour
+        vehicleId: vehicles[1]._id, // Mahindra Scorpio
+        driverId: drivers[1]._id, // Amit Singh
+        startDate: new Date('2026-02-20'),
+        endDate: new Date('2026-02-22'),
+        numberOfDays: 3,
+        numberOfPassengers: 6,
+        passengers: [
+          { name: 'Mike Wilson', age: 45, gender: 'male', contact: '8765432109' },
+          { name: 'Sarah Wilson', age: 42, gender: 'female', contact: '8765432110' },
+          { name: 'Tom Brown', age: 38, gender: 'male', contact: '8765432111' },
+          { name: 'Lisa Brown', age: 35, gender: 'female', contact: '8765432112' },
+          { name: 'David Lee', age: 30, gender: 'male', contact: '8765432113' },
+          { name: 'Emma Davis', age: 28, gender: 'female', contact: '8765432114' }
+        ],
+        estimatedKms: 200,
+        foodPreferences: {
+          breakfast: true,
+          lunch: true,
+          dinner: false,
+          snacks: true
+        },
+        costBreakdown: {
+          vehicleRentPerDay: 1800,
+          totalVehicleRent: 5400,
+          kmBasedCharge: 1600,
+          foodCost: 1200,
+          driverCharges: 600,
+          gst: 992,
+          totalAmount: 9792
+        },
+        advanceAmount: 2938, // 30% of total
+        remainingAmount: 6854,
+        bookingStatus: 'in-progress'
+      }
+    ]);
+
+    console.log('Created sample bookings');
     console.log('\n✓ Database seeded successfully!');
     console.log('\nDemo Credentials:');
     console.log('Email: demo@example.com');

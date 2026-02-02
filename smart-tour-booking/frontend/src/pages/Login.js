@@ -40,10 +40,17 @@ const Login = () => {
     }
 
     try {
-      await login(formData.email, formData.password);
+      const response = await login(formData.email, formData.password);
       setSuccess('Login successful! Redirecting...');
       setTimeout(() => {
-        navigate('/');
+        // Redirect based on user role
+        if (response.user.role === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (response.user.role === 'driver') {
+          navigate('/driver-dashboard');
+        } else {
+          navigate('/');
+        }
       }, 1500);
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');

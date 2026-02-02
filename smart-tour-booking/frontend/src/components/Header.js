@@ -42,9 +42,19 @@ const Header = () => {
               <Link to="/profile" className="user-btn">
                 <FaUser /> {user.name}
               </Link>
-              <Link to="/my-bookings" className="bookings-btn">
-                My Bookings
-              </Link>
+              {user.role === 'driver' ? (
+                <Link to="/driver-dashboard" className="bookings-btn">
+                  Driver Dashboard
+                </Link>
+              ) : user.role === 'admin' ? (
+                <Link to="/admin-dashboard" className="bookings-btn">
+                  Admin Dashboard
+                </Link>
+              ) : (
+                <Link to="/my-bookings" className="bookings-btn">
+                  My Bookings
+                </Link>
+              )}
               <button onClick={handleLogout} className="logout-btn">
                 <FaSignOutAlt /> Logout
               </button>

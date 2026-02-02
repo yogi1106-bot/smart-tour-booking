@@ -14,6 +14,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import MyBookings from './pages/MyBookings';
+import DriverDashboard from './pages/DriverDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import './styles/global.css';
 
 function App() {
@@ -35,6 +37,8 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/my-bookings" element={<MyBookings />} />
+                <Route path="/driver-dashboard" element={<DriverDashboard />} />
+                <Route path="/admin-dashboard" element={<AdminDashboard />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </main>

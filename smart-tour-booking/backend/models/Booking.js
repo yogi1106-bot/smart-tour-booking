@@ -44,8 +44,8 @@ const BookingSchema = new mongoose.Schema({
   passengers: [{
     name: String,
     age: Number,
-    email: String,
-    phone: String
+    gender: String,
+    contact: String
   }],
   estimatedKms: {
     type: Number,

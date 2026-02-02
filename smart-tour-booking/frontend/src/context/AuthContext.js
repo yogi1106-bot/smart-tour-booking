@@ -7,7 +7,31 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Initialize user from localStorage on app start
+    const initializeAuth = () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (storedToken && storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+          setToken(storedToken);
+        } catch (error) {
+          console.error('Failed to parse stored user:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setToken(null);
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -23,6 +47,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.register(userData);
       setToken(response.data.token);
       setUser(response.data.user);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -37,6 +62,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.login(email, password);
       setToken(response.data.token);
       setUser(response.data.user);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -48,6 +74,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   const updateProfile = async (profileData) => {
@@ -55,6 +83,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await usersAPI.updateProfile(profileData);
       setUser(response.data.data);
+      localStorage.setItem('user', JSON.stringify(response.data.data));
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

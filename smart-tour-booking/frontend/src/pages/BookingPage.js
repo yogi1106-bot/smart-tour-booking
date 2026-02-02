@@ -3,16 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { BookingContext } from '../context/BookingContext';
 import { AuthContext } from '../context/AuthContext';
 import './BookingPage.css';
-import { FaMapMarkerAlt, FaClock, FaUtensils, FaUsers, FaCalendarAlt, FaBus } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaClock, FaUtensils, FaUsers, FaCalendarAlt, FaBus, FaUser } from 'react-icons/fa';
 
 const BookingPage = () => {
   const { id: tourId } = useParams();
   const navigate = useNavigate();
-  const { tours, vehicles } = useContext(BookingContext);
+  const { tours, vehicles, drivers } = useContext(BookingContext);
   const { token } = useContext(AuthContext);
   
   const tour = tours.find(t => t._id === tourId);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [selectedDriver, setSelectedDriver] = useState(null);
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
@@ -137,6 +138,11 @@ const BookingPage = () => {
       return;
     }
 
+    if (!selectedDriver) {
+      alert('Please select a driver');
+      return;
+    }
+
     // Validate passenger details
     for (let i = 0; i < formData.numberOfPassengers; i++) {
       const passenger = formData.passengers[i];
@@ -150,6 +156,7 @@ const BookingPage = () => {
       state: {
         tourId,
         vehicleId: selectedVehicle._id,
+        driverId: selectedDriver._id,
         bookingData: formData,
         costBreakdown
       }
@@ -214,6 +221,31 @@ const BookingPage = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="form-section">
+              <h2>Select Driver</h2>
+              <div className="drivers-list">
+                {drivers.filter(d => d.status === 'active').length === 0 ? (
+                  <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>
+                    No drivers available at the moment. Please try again later.
+                  </p>
+                ) : (
+                  drivers.filter(d => d.status === 'active').map(driver => (
+                    <div
+                      key={driver._id}
+                      className={`driver-option ${selectedDriver?._id === driver._id ? 'selected' : ''}`}
+                      onClick={() => setSelectedDriver(driver)}
+                    >
+                      <div className="driver-info">
+                        <h3>{driver.userId?.name || 'N/A'}</h3>
+                        <p>Experience: {driver.experience} years | License: {driver.licenseNumber}</p>
+                        <p>Contact: {driver.userId?.phone || 'N/A'} | Rating: {driver.rating}/5</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -395,7 +427,29 @@ const BookingPage = () => {
 
           {/* Right Column - Cost Summary */}
           <div className="cost-summary">
-            <h2>Cost Summary</h2>
+            <h2>Booking Summary</h2>
+            
+            {selectedVehicle && (
+              <div className="selected-item">
+                <h3>Selected Vehicle</h3>
+                <div className="item-details">
+                  <FaBus /> <span>{selectedVehicle.type.toUpperCase()} - {selectedVehicle.model}</span>
+                  <small>Capacity: {selectedVehicle.capacity} | Reg: {selectedVehicle.registrationNumber}</small>
+                </div>
+              </div>
+            )}
+
+            {selectedDriver && (
+              <div className="selected-item">
+                <h3>Selected Driver</h3>
+                <div className="item-details">
+                  <FaUser /> <span>{selectedDriver.userId?.name || 'N/A'}</span>
+                  <small>Phone: {selectedDriver.userId?.phone} | Exp: {selectedDriver.experience} years</small>
+                </div>
+              </div>
+            )}
+
+            <h2>Cost Breakdown</h2>
             {costBreakdown ? (
               <div className="summary-box">
                 <div className="summary-row">

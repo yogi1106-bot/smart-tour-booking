@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { bookingsAPI } from '../services/api';
-import './Home.css'; // Reuse existing styles
-import { FaCalendarAlt, FaMapMarkerAlt, FaBus, FaUser, FaRupeeSign, FaEye, FaTimes, FaCheckCircle, FaClock, FaExclamationTriangle } from 'react-icons/fa';
+import './Home.css';
+import { FaCalendarAlt, FaMapMarkerAlt, FaBus, FaUser, FaRupeeSign, FaEye, FaCheckCircle, FaClock, FaExclamationTriangle, FaPhone, FaTimes } from 'react-icons/fa';
 
-const MyBookings = () => {
+const DriverDashboard = () => {
   const { user } = useContext(AuthContext);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,19 +12,20 @@ const MyBookings = () => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (user) {
-      fetchBookings();
+    if (user && user.role === 'driver') {
+      fetchDriverBookings();
     }
   }, [user]);
 
-  const fetchBookings = async () => {
+  const fetchDriverBookings = async () => {
     try {
       setLoading(true);
-      const response = await bookingsAPI.getUserBookings();
+      // We'll need to create a new API endpoint for driver bookings
+      const response = await bookingsAPI.getDriverBookings();
       setBookings(response.data.data);
     } catch (error) {
-      console.error('Error fetching bookings:', error);
-      setMessage('Failed to load bookings');
+      console.error('Error fetching driver bookings:', error);
+      setMessage('Failed to load your assigned bookings');
     } finally {
       setLoading(false);
     }
@@ -68,13 +69,39 @@ const MyBookings = () => {
     setSelectedBooking(null);
   };
 
+  const handleUpdateStatus = async (bookingId, status) => {
+    try {
+      await bookingsAPI.updateBookingStatus(bookingId, status);
+      setMessage('Booking status updated successfully!');
+      fetchDriverBookings(); // Refresh the list
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      setMessage('Failed to update booking status');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
   if (!user) {
     return (
-      <div className="my-bookings-page">
+      <div className="driver-dashboard">
         <div className="container">
           <div className="not-logged-in">
             <h1>Please Login</h1>
-            <p>You need to be logged in to view your bookings.</p>
+            <p>You need to be logged in as a driver to access this page.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (user.role !== 'driver') {
+    return (
+      <div className="driver-dashboard">
+        <div className="container">
+          <div className="access-denied">
+            <h1>Access Denied</h1>
+            <p>This page is only accessible to drivers.</p>
           </div>
         </div>
       </div>
@@ -82,11 +109,11 @@ const MyBookings = () => {
   }
 
   return (
-    <div className="my-bookings-page">
+    <div className="driver-dashboard">
       <div className="container">
-        <div className="bookings-header">
-          <h1>My Bookings</h1>
-          <p>View and manage your tour bookings</p>
+        <div className="dashboard-header">
+          <h1>Welcome, {user.name}!</h1>
+          <p>Manage your assigned bookings</p>
         </div>
 
         {message && (
@@ -104,9 +131,8 @@ const MyBookings = () => {
           <>
             {bookings.length === 0 ? (
               <div className="no-bookings">
-                <h3>No Bookings Found</h3>
-                <p>You haven't made any bookings yet.</p>
-                <a href="/tours" className="btn-primary">Browse Tours</a>
+                <h3>No Bookings Assigned</h3>
+                <p>You don't have any bookings assigned yet.</p>
               </div>
             ) : (
               <div className="bookings-grid">
@@ -150,17 +176,11 @@ const MyBookings = () => {
                         <div className="info-item">
                           <FaUser className="info-icon" />
                           <div>
-                            <label>Driver</label>
-                            <p>{booking.driverId?.userId?.name || 'N/A'}</p>
-                            <small>{booking.driverId?.userId?.phone || ''}</small>
-                          </div>
-                        </div>
-
-                        <div className="info-item">
-                          <FaUser className="info-icon" />
-                          <div>
-                            <label>Passengers</label>
-                            <p>{booking.numberOfPassengers} passenger{booking.numberOfPassengers !== 1 ? 's' : ''}</p>
+                            <label>Customer</label>
+                            <p>{booking.userId?.name || 'N/A'}</p>
+                            <small>
+                              <FaPhone /> {booking.userId?.phone || 'N/A'}
+                            </small>
                           </div>
                         </div>
                       </div>
@@ -188,7 +208,6 @@ const MyBookings = () => {
                           <div>
                             <label>Total Amount</label>
                             <p className="total-amount">₹{booking.costBreakdown?.totalAmount?.toLocaleString() || 'N/A'}</p>
-                            <small>Advance: ₹{booking.advanceAmount?.toLocaleString() || 'N/A'}</small>
                           </div>
                         </div>
                       </div>
@@ -201,6 +220,22 @@ const MyBookings = () => {
                       >
                         <FaEye /> View Details
                       </button>
+                      {booking.status === 'confirmed' && (
+                        <button
+                          onClick={() => handleUpdateStatus(booking._id, 'in-progress')}
+                          className="btn-primary"
+                        >
+                          <FaCheckCircle /> Start Trip
+                        </button>
+                      )}
+                      {booking.status === 'in-progress' && (
+                        <button
+                          onClick={() => handleUpdateStatus(booking._id, 'completed')}
+                          className="btn-success"
+                        >
+                          <FaCheckCircle /> Complete Trip
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -224,52 +259,49 @@ const MyBookings = () => {
                 <div className="details-grid">
                   <div className="detail-section">
                     <h3>Tour Information</h3>
-                    <p><strong>Name:</strong> {selectedBooking.tourId?.name}</p>
+                    <p><strong>Tour:</strong> {selectedBooking.tourId?.name}</p>
                     <p><strong>Location:</strong> {selectedBooking.tourId?.location}</p>
-                    <p><strong>Area:</strong> {selectedBooking.tourId?.area}</p>
+                    <p><strong>Duration:</strong> {selectedBooking.numberOfDays} days</p>
                   </div>
 
                   <div className="detail-section">
                     <h3>Vehicle Information</h3>
-                    <p><strong>Model:</strong> {selectedBooking.vehicleId?.model}</p>
+                    <p><strong>Vehicle:</strong> {selectedBooking.vehicleId?.model}</p>
                     <p><strong>Type:</strong> {selectedBooking.vehicleId?.type}</p>
                     <p><strong>Registration:</strong> {selectedBooking.vehicleId?.registrationNumber}</p>
                   </div>
 
                   <div className="detail-section">
-                    <h3>Driver Information</h3>
-                    <p><strong>Name:</strong> {selectedBooking.driverId?.userId?.name || 'Not assigned'}</p>
-                    <p><strong>Phone:</strong> {selectedBooking.driverId?.userId?.phone || 'Not available'}</p>
-                    <p><strong>License:</strong> {selectedBooking.driverId?.licenseNumber || 'Not available'}</p>
-                    <p><strong>Experience:</strong> {selectedBooking.driverId?.experience ? `${selectedBooking.driverId.experience} years` : 'Not available'}</p>
+                    <h3>Customer Information</h3>
+                    <p><strong>Name:</strong> {selectedBooking.userId?.name}</p>
+                    <p><strong>Email:</strong> {selectedBooking.userId?.email}</p>
+                    <p><strong>Phone:</strong> {selectedBooking.userId?.phone}</p>
                   </div>
 
                   <div className="detail-section">
-                    <h3>Travel Details</h3>
+                    <h3>Booking Details</h3>
+                    <p><strong>Passengers:</strong> {selectedBooking.numberOfPassengers}</p>
                     <p><strong>Start Date:</strong> {formatDate(selectedBooking.startDate)}</p>
                     <p><strong>End Date:</strong> {formatDate(selectedBooking.endDate)}</p>
-                    <p><strong>Duration:</strong> {selectedBooking.numberOfDays} days</p>
-                    <p><strong>Passengers:</strong> {selectedBooking.numberOfPassengers}</p>
-                    <p><strong>Estimated KMs:</strong> {selectedBooking.estimatedKms}</p>
-                  </div>
-
-                  <div className="detail-section">
-                    <h3>Cost Breakdown</h3>
-                    {selectedBooking.costBreakdown ? (
-                      <>
-                        <p><strong>Vehicle Rent:</strong> ₹{selectedBooking.costBreakdown.totalVehicleRent?.toLocaleString() || 'N/A'}</p>
-                        <p><strong>KM Charges:</strong> ₹{selectedBooking.costBreakdown.kmBasedCharge?.toLocaleString() || 'N/A'}</p>
-                        <p><strong>Food Cost:</strong> ₹{selectedBooking.costBreakdown.foodCost?.toLocaleString() || 'N/A'}</p>
-                        <p><strong>Driver Charges:</strong> ₹{selectedBooking.costBreakdown.driverCharges?.toLocaleString() || 'N/A'}</p>
-                        <p><strong>GST (18%):</strong> ₹{selectedBooking.costBreakdown.gst?.toLocaleString() || 'N/A'}</p>
-                        <hr />
-                        <p className="total"><strong>Total Amount:</strong> ₹{selectedBooking.costBreakdown.totalAmount?.toLocaleString() || 'N/A'}</p>
-                        <p><strong>Advance Paid:</strong> ₹{selectedBooking.advanceAmount?.toLocaleString() || 'N/A'}</p>
-                        <p><strong>Remaining:</strong> ₹{selectedBooking.remainingAmount?.toLocaleString() || 'N/A'}</p>
-                      </>
-                    ) : (
-                      <p>No cost breakdown available</p>
-                    )}
+                    <p><strong>Status:</strong> {selectedBooking.status}</p>
+                    <div className="status-actions">
+                      {selectedBooking.status === 'confirmed' && (
+                        <button
+                          onClick={() => handleUpdateStatus(selectedBooking._id, 'in-progress')}
+                          className="btn-primary"
+                        >
+                          <FaCheckCircle /> Start Trip
+                        </button>
+                      )}
+                      {selectedBooking.status === 'in-progress' && (
+                        <button
+                          onClick={() => handleUpdateStatus(selectedBooking._id, 'completed')}
+                          className="btn-success"
+                        >
+                          <FaCheckCircle /> Complete Trip
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {selectedBooking.passengers && selectedBooking.passengers.length > 0 && (
@@ -278,36 +310,21 @@ const MyBookings = () => {
                       <div className="passengers-list">
                         {selectedBooking.passengers.map((passenger, index) => (
                           <div key={index} className="passenger-item">
-                            <p><strong>Name:</strong> {passenger?.name || 'Not provided'}</p>
-                            <p><strong>Age:</strong> {passenger?.age || 'Not provided'}</p>
-                            <p><strong>Gender:</strong> {passenger?.gender || 'Not provided'}</p>
-                            <p><strong>Contact:</strong> {passenger?.contact || 'Not provided'}</p>
+                            <h4>Passenger {index + 1}</h4>
+                            <p><strong>Name:</strong> {passenger.name}</p>
+                            <p><strong>Age:</strong> {passenger.age}</p>
+                            <p><strong>Gender:</strong> {passenger.gender}</p>
+                            {passenger.contact && <p><strong>Contact:</strong> {passenger.contact}</p>}
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {selectedBooking.payments && selectedBooking.payments.length > 0 && (
+                  {selectedBooking.specialRequests && (
                     <div className="detail-section full-width">
-                      <h3>Payment Information</h3>
-                      <div className="payments-list">
-                        {selectedBooking.payments.map((payment, index) => (
-                          <div key={index} className="payment-item">
-                            <div className="payment-header">
-                              <span className="payment-method">{payment?.paymentMethod?.toUpperCase() || 'N/A'}</span>
-                              <span className={`payment-status ${payment?.status || 'pending'}`}>
-                                {payment?.status || 'pending'}
-                              </span>
-                            </div>
-                            <div className="payment-details">
-                              <p><strong>Amount:</strong> ₹{payment?.amount?.toLocaleString() || 'N/A'}</p>
-                              <p><strong>Transaction ID:</strong> {payment?.transactionId || 'N/A'}</p>
-                              <p><strong>Date:</strong> {payment?.createdAt ? new Date(payment.createdAt).toLocaleDateString('en-IN') : 'N/A'}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <h3>Special Requests</h3>
+                      <p>{selectedBooking.specialRequests}</p>
                     </div>
                   )}
                 </div>
@@ -320,4 +337,4 @@ const MyBookings = () => {
   );
 };
 
-export default MyBookings;
+export default DriverDashboard;
