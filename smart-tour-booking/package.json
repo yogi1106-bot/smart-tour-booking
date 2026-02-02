@@ -2,6 +2,7 @@
   "name": "smart-tour-booking",
   "version": "1.0.0",
   "description": "Your Smart & Reliable Bus Travel Partner",
+  "homepage": "https://yogi1106-bot.github.io/smart-tour-booking",
   "main": "server.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
@@ -12,6 +13,8 @@
     "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "deploy": "./deploy.sh",
     "deploy:win": "deploy.bat",
+    "deploy:pages": "./deploy-pages.sh",
+    "deploy:pages:win": "deploy-pages.bat",
     "build:all": "npm run install-all && npm run build",
     "test": "cd backend && npm test && cd ../frontend && npm test"
   },
@@ -24,6 +27,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^7.6.0"
+    "concurrently": "^7.6.0",
+    "gh-pages": "^6.1.1"
   }
 }
