@@ -1,4 +1,4 @@
-name: Deploy Application
+name: Deploy Frontend
 
 on:
   push:
@@ -48,6 +48,7 @@ jobs:
         cd frontend
         npm run build
       env:
+        CI: false
         REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL || 'https://your-backend-url.onrender.com' }}
 
     - name: Upload artifact
@@ -58,53 +59,3 @@ jobs:
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
-
-  # Deploy Backend (Optional - for services that support it)
-  deploy-backend:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: backend/package-lock.json
-
-    - name: Install backend dependencies
-      run: |
-        cd backend
-        npm ci
-
-    - name: Create production .env
-      run: |
-        cd backend
-        cat > .env << EOF
-        PORT=5000
-        MONGODB_URI=${{ secrets.MONGODB_URI }}
-        JWT_SECRET=${{ secrets.JWT_SECRET }}
-        JWT_EXPIRE=7d
-        STRIPE_PUBLIC_KEY=${{ secrets.STRIPE_PUBLIC_KEY }}
-        STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
-        EMAIL_USER=${{ secrets.EMAIL_USER }}
-        EMAIL_PASS=${{ secrets.EMAIL_PASS }}
-        FRONTEND_URL=https://${{ github.actor }}.github.io/smart-tour-booking
-        NODE_ENV=production
-        EOF
-
-    - name: Build backend (if needed)
-      run: |
-        cd backend
-        npm run build 2>/dev/null || echo "No build script found"
-
-    - name: Deploy to Railway/Render/Vercel
-      run: |
-        echo "Backend deployment would happen here"
-        echo "For Railway: railway deploy"
-        echo "For Render: Use their CLI or webhook"
-        echo "For Vercel: vercel --prod"
-        echo "Add your preferred deployment command here"
